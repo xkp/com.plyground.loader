@@ -16,7 +16,6 @@ using UnityEditor.Rendering;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-#if false
 public class PlygroundLoader
 {
 	public static async Task Load(string gameItemPath, string buildFilePath, string modulePath, string assetPath, List<PostProcessNode> preprocess)
@@ -787,4 +786,3 @@ public class PlygroundLoader
 		return tcs.Task;
 	}
 }
-#endif

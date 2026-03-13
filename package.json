@@ -1,0 +1,11 @@
+{
+    "name": "com.plyground.loader",
+    "version": "0.7.21",
+    "displayName": "plyground Loader",
+    "description": "An asset importer from the plyground platform",
+    "unity": "2020.3",
+	"dependencies": {
+		"com.unity.ai.navigation": "2.0.5"
+	}
+  }
+  

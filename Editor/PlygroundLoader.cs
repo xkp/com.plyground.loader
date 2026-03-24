@@ -97,7 +97,7 @@ public class PlygroundLoader
 		return modules.FirstOrDefault(m => m.Model.id == moduleId);
 	}
 
-	private static IEnumerable<IPlygroundModule> BuildModules(Plyground game, string modulePath, List<string> usedModules)
+	private static IEnumerable<IPlygroundModule> BuildModules(PlygroundGame game, string modulePath, List<string> usedModules)
 	{
 		var result = new List<IPlygroundModule>();
 
@@ -169,7 +169,7 @@ public class PlygroundLoader
 		return instance as IPlygroundModule;
 	}
 
-	public static Plyground LoadGame(string gameItemPath, string modulePath, out IEnumerable<IPlygroundModule> modules)
+	public static PlygroundGame LoadGame(string gameItemPath, string modulePath, out IEnumerable<IPlygroundModule> modules)
 	{
 		string jsonContent = File.ReadAllText(gameItemPath);
 		JObject jsonObject = JObject.Parse(jsonContent);
@@ -177,9 +177,9 @@ public class PlygroundLoader
 	}
 
 	private static string CoreModuleId = "53D8F89C-4EDC-4DEF-B464-015BD1187E95";
-	private static Plyground LoadGame(JObject root, string modulePath, out IEnumerable<IPlygroundModule> modules)
+	private static PlygroundGame LoadGame(JObject root, string modulePath, out IEnumerable<IPlygroundModule> modules)
 	{
-		var result = new Plyground();
+		var result = new PlygroundGame();
 		result.Name = root["name"]?.ToString();
 
 		var usedModules = new List<string>();
@@ -226,7 +226,7 @@ public class PlygroundLoader
 		return result;
 	}
 
-	private static GameItem LoadGameItem(JObject itemNode, Plyground game)
+	private static GameItem LoadGameItem(JObject itemNode, PlygroundGame game)
 	{
 		var result = new GameItem();
 		result.Id = itemNode["id"]?.ToString();

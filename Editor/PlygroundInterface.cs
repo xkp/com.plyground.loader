@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.TextCore.Text;
 
 
-public class Plyground
+public class PlygroundGame
 {
 	public string Name { get; set; }
 	public string MainModule { get; set; }
@@ -144,7 +144,7 @@ public interface IPlygroundModule
 	PlygroundModule Model { get; set; }
 	PlygroundItem GetTemplateItem(string id);
 
-	Task Init(IEnumerable<IPlygroundModule> modules, Plyground game);
+	Task Init(IEnumerable<IPlygroundModule> modules, PlygroundGame game);
 	Task ConfigProject();
 	Task Build();
 	Task Cleanup();
@@ -171,7 +171,7 @@ public class BasePlygroundModule : IPlygroundModule
 {
 	public PlygroundModule Model { get; set; }
 
-	public virtual Task Init(IEnumerable<IPlygroundModule> modules, Plyground game)
+	public virtual Task Init(IEnumerable<IPlygroundModule> modules, PlygroundGame game)
 	{
 		_game = game;
 		_modules = modules;
@@ -291,7 +291,7 @@ public class BasePlygroundModule : IPlygroundModule
 		return Task.CompletedTask;
 	}
 
-	protected Plyground _game;
+	protected PlygroundGame _game;
 	protected IEnumerable<IPlygroundModule> _modules;
 	protected IPlygroundGameModule _gameModule;
 }

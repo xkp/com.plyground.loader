@@ -241,7 +241,7 @@ public class ThreedeeLoader
 		// Load FBX files
 		string[] fbxFiles = Directory.GetFiles(inputFolder, "*.fbx");
 
-		string meshFolder = Path.Combine(outputFolder, "Assets", "plyground", "Meshes");
+		string meshFolder = outputFolder;
 		Directory.CreateDirectory(meshFolder);
 		foreach (string fbxPath in fbxFiles)
 		{
@@ -251,7 +251,11 @@ public class ThreedeeLoader
 
 		foreach (string fbxPath in fbxFiles)
 		{
-			string assetPath = Path.Combine("Assets", "plyground", "Meshes", Path.GetFileName(fbxPath));
+			string meshesFolder = Path.Combine(Application.dataPath, "plyground", "Environment");
+			if (!Directory.Exists(meshesFolder))
+				Directory.CreateDirectory(meshesFolder);
+
+			string assetPath = Path.Combine("Assets", "plyground", "Environment", Path.GetFileName(fbxPath));
 
 			AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
 			ModelImporter importer = AssetImporter.GetAtPath(assetPath) as ModelImporter;
@@ -572,7 +576,7 @@ public class ThreedeeLoader
 
 	private static string GetMeshPath(string mesh)
 	{
-		return Path.Combine("Assets", "plyground", "Meshes", mesh);
+		return Path.Combine("Assets", "plyground", "Environment", mesh);
 	}
 
 	private static void ApplyAttribute(GameObject instance, NodeAttribute attribute)

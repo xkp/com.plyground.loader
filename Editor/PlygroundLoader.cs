@@ -466,10 +466,16 @@ public class PlygroundLoader
 		return guidToObjectMap;
 	}
 
-	public static async Task Update(string gameItemPath, string modulePath)
+	public static async Task Update(string gameItemPath, string buildFilePath, string modulePath, string assetPath)
 	{
 		string jsonContent = File.ReadAllText(gameItemPath);
 		JObject jsonObject = JObject.Parse(jsonContent);
+		JObject buildFileObject = null;
+		if (!string.IsNullOrEmpty(buildFilePath) && File.Exists(buildFilePath))
+		{
+			string buildContent = File.ReadAllText(buildFilePath);
+			buildFileObject = JObject.Parse(buildContent);
+		}
 
 		var game = LoadGame(jsonObject, modulePath, out var modules);
 		if (game == null)
@@ -542,8 +548,8 @@ public class PlygroundLoader
 				var module = GetModuleById(modules, gi.ModuleId);
 				if (module != null)
 				{
-					//TODO: load build items
-					await CreateGameObject(gi, null, modules, string.Empty);
+					JObject buildItem = GetBuildItem(buildFileObject, gi.BuildId);
+					await CreateGameObject(gi, buildItem, modules, assetPath);
 				}
 			}
 

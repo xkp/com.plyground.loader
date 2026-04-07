@@ -232,18 +232,24 @@ public class PlygroundBuildScript
 	private static readonly List<(string id, AddRequest request, DateTime started)> _active = new();
 	private static readonly List<(string id, string error)> _failed = new();
 	private static readonly List<string> _succeeded = new();
+	private static readonly List<string> _excludedBuildFiles = new();
 	private static int _timeoutPerPkgSec = DefaultPerPackageTimeoutSec;
 	private static bool _started = false;
 	private static void InstallUPM(string[] packages)
 	{
 		try
 		{
-			if (_started) return;
+			if (_started)
+			{
+				RemoveExcludedBuildFiles();
+				return;
+			}
 			_started = true;
 
 			if (packages.Length == 0)
 			{
-				Debug.LogError("[BatchAddUpmPackages] No packages specified. Use -packagesFile or -packages.");
+				Debug.Log("[BatchAddUpmPackages] No packages specified.");
+				RemoveExcludedBuildFiles();
 				return;
 			}
 
@@ -323,6 +329,7 @@ public class PlygroundBuildScript
 			// Force refresh to import any newly added assets/asmdefs
 			try
 			{
+				RemoveExcludedBuildFiles();
 				AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 				AssetDatabase.SaveAssets();
 			}
@@ -361,6 +368,8 @@ public class PlygroundBuildScript
 		public string id;
 		public string name;
 		public List<string> dependencies;
+		public List<string> excludedBuildFiles;
+		[NonSerialized] public string sourceDirectory;
 	}
 
 	private static List<ImportModule> LoadGameModules(string gameItemPath, string modulePath)
@@ -377,12 +386,87 @@ public class PlygroundBuildScript
 				{
 					var bgmFileContents = File.ReadAllText(bgmFile);
 					var module = JsonUtility.FromJson<ImportModule>(bgmFileContents);
+					if (module != null)
+					{
+						module.sourceDirectory = Path.GetDirectoryName(bgmFile);
+						RegisterExcludedBuildFiles(module);
+					}
 					result.Add(module);
 				}
 			}
 		}
 
 		return result;
+	}
+
+	private static void RegisterExcludedBuildFiles(ImportModule module)
+	{
+		if (module?.excludedBuildFiles == null || string.IsNullOrEmpty(module.sourceDirectory))
+			return;
+
+		foreach (var excludedFile in module.excludedBuildFiles)
+		{
+			var resolvedPath = ResolveModuleFilePath(module.sourceDirectory, excludedFile);
+			if (string.IsNullOrEmpty(resolvedPath))
+				continue;
+
+			if (!_excludedBuildFiles.Contains(resolvedPath))
+			{
+				_excludedBuildFiles.Add(resolvedPath);
+				Debug.Log($"[threedee] Excluding build file: {resolvedPath}");
+			}
+		}
+	}
+
+	private static string ResolveModuleFilePath(string moduleDirectory, string filePath)
+	{
+		if (string.IsNullOrWhiteSpace(filePath))
+			return null;
+
+		var fullPath = Path.GetFullPath(Path.IsPathRooted(filePath)
+			? filePath
+			: Path.Combine(moduleDirectory, filePath));
+
+		var projectRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
+		if (!fullPath.StartsWith(projectRoot, StringComparison.OrdinalIgnoreCase))
+		{
+			Debug.LogWarning($"[threedee] Skipping excluded build file outside project: {filePath}");
+			return null;
+		}
+
+		return fullPath;
+	}
+
+	private static void RemoveExcludedBuildFiles()
+	{
+		if (_excludedBuildFiles.Count == 0)
+			return;
+
+		var excludedFiles = _excludedBuildFiles.ToList();
+		_excludedBuildFiles.Clear();
+
+		foreach (var path in excludedFiles)
+		{
+			try
+			{
+				if (File.Exists(path))
+				{
+					File.Delete(path);
+					Debug.Log($"[threedee] Removed excluded build file: {path}");
+				}
+
+				var metaPath = path + ".meta";
+				if (File.Exists(metaPath))
+				{
+					File.Delete(metaPath);
+					Debug.Log($"[threedee] Removed excluded build meta file: {metaPath}");
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"[threedee] Failed to remove excluded build file '{path}': {ex.Message}");
+			}
+		}
 	}
 
 	public static async void CreateGame()
@@ -471,6 +555,8 @@ public class PlygroundBuildScript
 		if (!Scaffold(out inputFolder, out outputFolder, out gameItemPath, out modulePath, out assetPath))
 			return;
 
+		string buildFilePath = Path.Combine(Path.GetDirectoryName(gameItemPath), "build.json");
+
 		Scene scene = OpenDefaultScene();
 		if (!scene.IsValid())
 		{
@@ -479,7 +565,7 @@ public class PlygroundBuildScript
 		}
 
 		Console.WriteLine("Loading environment assets...");
-		await PlygroundLoader.Update(gameItemPath, modulePath);
+		await PlygroundLoader.Update(gameItemPath, buildFilePath, modulePath, assetPath);
 
 		UpdateNavMeshes();
 

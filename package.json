@@ -1,6 +1,6 @@
 {
     "name": "com.plyground.loader",
-    "version": "0.8.33",
+    "version": "0.8.4",
     "displayName": "Plyground Loader",
     "description": "An asset importer from the plyground platform",
     "unity": "2020.3",

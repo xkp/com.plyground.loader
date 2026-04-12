@@ -375,11 +375,10 @@ public class PlygroundBuildScript
 	private static List<ImportModule> LoadGameModules(string gameItemPath, string modulePath)
 	{
 		var result = new List<ImportModule>();
-		var jsonContent = File.ReadAllText(gameItemPath);
-		var import = JsonUtility.FromJson<ImportGame>(jsonContent);
-		if (import != null)
+		var moduleIds = LoadModuleSource(gameItemPath);
+		if (moduleIds != null)
 		{
-			foreach (var moduleId in import.modules)
+			foreach (var moduleId in moduleIds)
 			{
 				var bgmFile = Path.Combine(modulePath, moduleId, "module.bgm");
 				if (File.Exists(bgmFile))
@@ -397,6 +396,15 @@ public class PlygroundBuildScript
 		}
 
 		return result;
+	}
+
+	private static List<string> LoadModuleSource(string gameItemPath)
+	{
+		var buildModules = PlygroundModuleExtractor.ExtractModuleIdsFromFile(Configuration.buildFile);
+		if (buildModules.Count > 0)
+			return buildModules;
+
+		return PlygroundModuleExtractor.ExtractModuleIdsFromFile(gameItemPath);
 	}
 
 	private static void RegisterExcludedBuildFiles(ImportModule module)

@@ -27,7 +27,7 @@ public class PlygroundLoader
 		string buildContent = File.ReadAllText(buildFilePath);
 		JObject buildFileObject = JObject.Parse(buildContent);
 
-		var game = LoadGame(jsonObject, modulePath, out var modules);
+		var game = LoadGame(jsonObject, buildFileObject, modulePath, out var modules);
 		if (game == null)
 		{
 			Debug.Log($"could not load: {gameItemPath}");
@@ -173,23 +173,16 @@ public class PlygroundLoader
 	{
 		string jsonContent = File.ReadAllText(gameItemPath);
 		JObject jsonObject = JObject.Parse(jsonContent);
-		return LoadGame(jsonObject, modulePath, out modules);
+		return LoadGame(jsonObject, null, modulePath, out modules);
 	}
 
 	private static string CoreModuleId = "53D8F89C-4EDC-4DEF-B464-015BD1187E95";
-	private static PlygroundGame LoadGame(JObject root, string modulePath, out IEnumerable<IPlygroundModule> modules)
+	private static PlygroundGame LoadGame(JObject root, JObject buildFileObject, string modulePath, out IEnumerable<IPlygroundModule> modules)
 	{
 		var result = new PlygroundGame();
 		result.Name = root["name"]?.ToString();
 
-		var usedModules = new List<string>();
-
-		var modulesNode = root["modules"] as JArray;
-		foreach (var moduleNode in modulesNode)
-		{
-			var moduleName = moduleNode.ToString();
-			usedModules.Add(moduleName.ToUpper());
-		}
+		var usedModules = LoadUsedModuleIds(buildFileObject, root);
 
 		modules = BuildModules(result, modulePath, usedModules);
 
@@ -219,6 +212,15 @@ public class PlygroundLoader
 		}
 
 		return result;
+	}
+
+	public static List<string> LoadUsedModuleIds(JObject buildFileObject, JObject gameItemObject)
+	{
+		var moduleIds = PlygroundModuleExtractor.ExtractModuleIds(buildFileObject);
+		if (moduleIds.Count > 0)
+			return moduleIds;
+
+		return PlygroundModuleExtractor.ExtractModuleIds(gameItemObject);
 	}
 
 	private static GameItem LoadGameItem(JObject itemNode, PlygroundGame game)
@@ -472,7 +474,7 @@ public class PlygroundLoader
 			buildFileObject = JObject.Parse(buildContent);
 		}
 
-		var game = LoadGame(jsonObject, modulePath, out var modules);
+		var game = LoadGame(jsonObject, buildFileObject, modulePath, out var modules);
 		if (game == null)
 		{
 			Debug.Log($"could not load: {gameItemPath}");

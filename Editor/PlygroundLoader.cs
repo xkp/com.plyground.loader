@@ -114,7 +114,7 @@ public class PlygroundLoader
 				JObject jsonObject = JObject.Parse(json);
 
 				var moduleData = LoadModule(jsonObject);
-				var used = usedModules.Contains(moduleData.id);
+				var used = usedModules.Contains(moduleData.id.ToUpper());
 				if (used)
 				{
 					var module = LoadAndInitializeController(moduleData.controller);
@@ -188,12 +188,7 @@ public class PlygroundLoader
 		foreach (var moduleNode in modulesNode)
 		{
 			var moduleName = moduleNode.ToString();
-			usedModules.Add(moduleName);
-		}
-
-		if (!usedModules.Contains(CoreModuleId))
-		{
-			usedModules.Add(CoreModuleId);
+			usedModules.Add(moduleName.ToUpper());
 		}
 
 		modules = BuildModules(result, modulePath, usedModules);

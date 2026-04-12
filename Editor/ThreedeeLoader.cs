@@ -433,7 +433,6 @@ public class ThreedeeLoader
 
 				if (isSurface(child))
 				{
-					removeGeometry = true;
 					postprocess.Add(new PostProcessNode { GameObject = t.gameObject, Attributes = child.Attributes });
 				}
 			}

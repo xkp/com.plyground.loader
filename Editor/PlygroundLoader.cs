@@ -99,6 +99,9 @@ public class PlygroundLoader
 
 	private static IEnumerable<IPlygroundModule> BuildModules(PlygroundGame game, string modulePath, List<string> usedModules)
 	{
+        //make sure modules are uppercase for comparison
+        usedModules = usedModules.Select(m => m.ToUpper()).ToList();
+
 		var result = new List<IPlygroundModule>();
 
 		string[] jsonFiles = Directory.GetFiles(modulePath, "module.bgm", SearchOption.AllDirectories);
@@ -183,27 +186,7 @@ public class PlygroundLoader
 		result.Name = root["name"]?.ToString();
 
 		var usedModules = LoadUsedModuleIds(buildFileObject, root);
-
 		modules = BuildModules(result, modulePath, usedModules);
-
-		/*		var userItemTemplatesNodes = root["userItemTemplates"] as JArray;
-				foreach (JObject userItemTemplateNode in userItemTemplatesNodes)
-				{
-					var templateModuleId = userItemTemplateNode["_moduleId"]?.ToString();
-					var templateModule = modules.FirstOrDefault(m => m.Model.id == templateModuleId);
-					if (templateModule == null)
-					{
-						Debug.Log($"A user template is referencing an unknown module: {templateModuleId}");
-						continue;
-					}
-
-					var templateItem = LoadPlygroundItem(userItemTemplateNode);
-					templateModule.Model.userTemplates.Add(templateItem);
-				}
-		*/
-		/*		var mainCharacterNode = root["character"] as JObject;
-				result.Character = LoadCharacter(mainCharacterNode);
-		*/
 		var itemsNode = root["items"] as JArray;
 		foreach (JObject itemNode in itemsNode)
 		{

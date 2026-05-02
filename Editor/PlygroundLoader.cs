@@ -16,6 +16,8 @@ using UnityEditor.Rendering;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
+using ConnectionContext = Dictionary<string, object>;
+
 public class PlygroundLoader
 {
 	public static async Task Load(string gameItemPath, string buildFilePath, string modulePath, string assetPath, List<PostProcessNode> preprocess)
@@ -53,13 +55,42 @@ public class PlygroundLoader
 			await module.Preprocess(preprocess);
 		}
 
+        var created = new Dictionary<GameItem, GameObject>();
 		if (game.GameItems != null)
 		{
 			foreach (var item in game.GameItems)
 			{
 				JObject buildItem = GetBuildItem(buildFileObject, item.BuildId);
-				await CreateGameObject(item, buildItem, modules, assetPath);
+				var result = await CreateGameObject(item, buildItem, modules, assetPath);
+                if (result != null)
+                    created[item] = result;
 			}
+		}
+
+		foreach (var module in modules)
+		{
+			await module.Buid();
+		}
+
+        var connContext = new ConnectionContext();
+		if (game.GameItems != null)
+		{
+			foreach (var item in game.GameItems)
+            {
+                if (created.TryGetValue(item, out GameObject go))
+                {
+                    var module = modules.FirstOrDefault(m => m.Id == item.ModuleId);
+                    if (module != null)
+                    {
+                        await module.Connect(go, connContext);
+                    }
+                }
+            }
+		}
+
+		foreach (var module in modules)
+		{
+			await module.AfterConnection(connContext);
 		}
 
 		foreach (var module in modules)
@@ -590,7 +621,7 @@ public class PlygroundLoader
 		}
 	}
 
-	private static async Task CreateGameObject(GameItem item, JObject buildItem, IEnumerable<IPlygroundModule> modules, string assetPath)
+	private static async Task<GameObject> CreateGameObject(GameItem item, JObject buildItem, IEnumerable<IPlygroundModule> modules, string assetPath)
 	{
 		var module = GetModuleById(modules, item.ModuleId);
 		if (module != null)
@@ -637,6 +668,7 @@ public class PlygroundLoader
 				}
 
 				go.name = item.Id; //just in case
+                return go;
 			}
 		}
 		else
@@ -651,6 +683,8 @@ public class PlygroundLoader
 						var go = await ImportGlbAsync(glbPath, unityPath);
 						go.name = item.Id;
 						UpdateGameObject(item, go);
+
+                        return go;
 					}
 					else
 					{
@@ -662,6 +696,8 @@ public class PlygroundLoader
 					break;
 			}
 		}
+
+        return null;
 	}
 
 	/// <summary>

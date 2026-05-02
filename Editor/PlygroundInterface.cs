@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
+using ConnectionContext = Dictionary<string, object>;
 
 public class PlygroundGame
 {
@@ -137,7 +138,6 @@ public class GameItem
 	}
 }
 
-
 //modules
 public interface IPlygroundModule
 {
@@ -147,6 +147,8 @@ public interface IPlygroundModule
 	Task Init(IEnumerable<IPlygroundModule> modules, PlygroundGame game);
 	Task ConfigProject();
 	Task Build();
+	Task ConnectObject(GameObject gameObject, ConnectionContext context);
+	Task AfterConnection(ConnectionContext context);
 	Task Cleanup();
 
 	Task<GameObject> CreateItem(GameItem item, PlygroundItem template, JObject buildItem);
@@ -200,6 +202,16 @@ public class BasePlygroundModule : IPlygroundModule
 	{
 		return Task.CompletedTask;
 	}
+
+	public virtual Task ConnectObject(GameObject gameObject, ConnectionContext context)
+    {
+		return Task.CompletedTask;
+    }
+
+	public virtual Task AfterConnection(ConnectionContext context)
+    {
+		return Task.CompletedTask;
+    }
 
 	public virtual Task Cleanup()
 	{

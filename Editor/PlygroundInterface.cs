@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
-using ConnectionContext = Dictionary<string, object>;
+using ConnectionContext = System.Collections.Generic.Dictionary<string, object>;
 
 public class PlygroundGame
 {

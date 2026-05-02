@@ -16,7 +16,7 @@ using UnityEditor.Rendering;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-using ConnectionContext = Dictionary<string, object>;
+using ConnectionContext = System.Collections.Generic.Dictionary<string, object>;
 
 public class PlygroundLoader
 {
@@ -69,7 +69,7 @@ public class PlygroundLoader
 
 		foreach (var module in modules)
 		{
-			await module.Buid();
+			await module.Build();
 		}
 
         var connContext = new ConnectionContext();
@@ -79,10 +79,10 @@ public class PlygroundLoader
             {
                 if (created.TryGetValue(item, out GameObject go))
                 {
-                    var module = modules.FirstOrDefault(m => m.Id == item.ModuleId);
+                    var module = modules.FirstOrDefault(m => m.Model.id == item.ModuleId);
                     if (module != null)
                     {
-                        await module.Connect(go, connContext);
+                        await module.ConnectObject(go, connContext);
                     }
                 }
             }
@@ -641,7 +641,7 @@ public class PlygroundLoader
 						if (guids.Length == 0)
 						{
 							Debug.LogError($"No prefab found with name '{prefabName}'");
-							return;
+							return null;
 						}
 
 						// Assume the first found prefab is the one we want.
@@ -650,7 +650,7 @@ public class PlygroundLoader
 						if (prefab == null)
 						{
 							Debug.LogError($"Failed to load prefab at path: {path}");
-							return;
+							return null;
 						}
 
 						GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);

@@ -47,6 +47,8 @@ public class PlygroundLoader
 			await module.ConfigProject();
 		}
 
+		PlygroundGlobalFeatureInstaller.Install(game.GameFeatures);
+
 		foreach (var module in modules)
 		{
 			if (!preprocess.Any())
@@ -218,11 +220,36 @@ public class PlygroundLoader
 
 		var usedModules = LoadUsedModuleIds(buildFileObject, root);
 		modules = BuildModules(result, modulePath, usedModules);
+		result.GameFeatures = LoadGameFeatures(root["gameFeatures"] as JArray);
 		var itemsNode = root["items"] as JArray;
-		foreach (JObject itemNode in itemsNode)
+		if (itemsNode != null)
 		{
-			var gameItem = LoadGameItem(itemNode, result);
-			result.GameItems.Add(gameItem);
+			foreach (JObject itemNode in itemsNode)
+			{
+				var gameItem = LoadGameItem(itemNode, result);
+				result.GameItems.Add(gameItem);
+			}
+		}
+
+		return result;
+	}
+
+	private static List<GameFeature> LoadGameFeatures(JArray featuresNode)
+	{
+		var result = new List<GameFeature>();
+		if (featuresNode == null)
+			return result;
+
+		foreach (var featureNode in featuresNode.OfType<JObject>())
+		{
+			result.Add(new GameFeature
+			{
+				OrchestratorRequestId = featureNode["orchestratorRequestId"]?.ToString(),
+				Name = featureNode["name"]?.ToString(),
+				IsGlobal = featureNode["isGlobal"]?.Value<bool>() ?? false,
+				Code = featureNode["code"]?.ToString(),
+				ModuleId = featureNode["moduleId"]?.ToString()
+			});
 		}
 
 		return result;
@@ -499,6 +526,8 @@ public class PlygroundLoader
 		{
 			await module.Init(modules, game);
 		}
+
+		PlygroundGlobalFeatureInstaller.Install(game.GameFeatures);
 
 		var index = GetGameObjectsIndex();
 		if (game.GameItems != null)

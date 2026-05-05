@@ -17,6 +17,7 @@ public class PlygroundGame
 	public List<PlygroundModule> Modules { get; set; } = new List<PlygroundModule>();
 
 	public List<GameItem> GameItems { get; set; } = new List<GameItem>();
+	public List<GameFeature> GameFeatures { get; set; } = new List<GameFeature>();
 
 	public PlygroundModule GetModule(string id)
 	{
@@ -28,6 +29,15 @@ public class PlygroundGame
 		var module = GetModule(item.ModuleId);
 		return module?.GetTemplate(item.TemplateId);
 	}
+}
+
+public class GameFeature
+{
+	public string OrchestratorRequestId { get; set; }
+	public string Name { get; set; }
+	public bool IsGlobal { get; set; }
+	public string Code { get; set; }
+	public string ModuleId { get; set; }
 }
 
 public class PlygroundModule

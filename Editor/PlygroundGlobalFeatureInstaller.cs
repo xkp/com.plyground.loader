@@ -93,7 +93,7 @@ public static class PlygroundGlobalFeatureInstaller
 		StorePendingFeatures(remaining);
 	}
 
-	private static Type FindFeatureType(string className)
+	public static Type FindFeatureType(string className)
 	{
 		return TypeCache.GetTypesDerivedFrom<MonoBehaviour>()
 			.FirstOrDefault(type => type.Name == className);
@@ -110,7 +110,7 @@ public static class PlygroundGlobalFeatureInstaller
 		return plyground;
 	}
 
-	private static string ResolveClassName(GameFeature feature)
+	public static string ResolveClassName(GameFeature feature)
 	{
 		var directMonoBehaviourMatch = Regex.Match(
 			feature.Code,

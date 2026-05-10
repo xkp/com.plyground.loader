@@ -36,6 +36,7 @@ public static class PlygroundModuleExtractor
 
 		AddRangeFromObjects(result, source["npcs"] as JArray, "moduleId");
 		AddRangeFromObjects(result, source["gameFeatures"] as JArray, "moduleId");
+		AddModulesFromItems(result, source["items"] as JArray);
 
 		AddStoryModules(result, source.SelectToken("storyMap.gameplay") as JObject);
 		AddStoryModules(result, source.SelectToken("storyMap.environment") as JObject);
@@ -81,5 +82,29 @@ public static class PlygroundModuleExtractor
 			return;
 
 		moduleIds.Add(value.Trim());
+	}
+
+	private static void AddModulesFromItems(HashSet<string> moduleIds, JArray items)
+	{
+		if (items == null)
+			return;
+
+		foreach (var item in items.OfType<JObject>())
+		{
+			Add(moduleIds, item["moduleId"]?.ToString());
+			AddRangeFromObjects(moduleIds, item["gameFeatures"] as JArray, "moduleId");
+			AddRangeFromObjects(moduleIds, item["features"] as JArray, "moduleId");
+
+			var components = item["components"] as JArray;
+			if (components == null)
+				continue;
+
+			foreach (var component in components.OfType<JObject>())
+			{
+				Add(moduleIds, component["moduleId"]?.ToString());
+				AddRangeFromObjects(moduleIds, component["gameFeatures"] as JArray, "moduleId");
+				AddRangeFromObjects(moduleIds, component["features"] as JArray, "moduleId");
+			}
+		}
 	}
 }

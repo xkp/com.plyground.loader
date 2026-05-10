@@ -40,6 +40,15 @@ public class GameFeature
 	public string ModuleId { get; set; }
 }
 
+public class GameComponent
+{
+	public string Id { get; set; }
+	public string Name { get; set; }
+	public string ModuleId { get; set; }
+	public Dictionary<string, object> Values { get; set; }
+	public List<GameFeature> GameFeatures { get; set; } = new List<GameFeature>();
+}
+
 public class PlygroundModule
 {
 	public string id { get; set; }
@@ -131,6 +140,8 @@ public class GameItem
 	public string TemplateId { get; set; }
 	public string BuildId { get; set; }
 	public Dictionary<string, object> Values { get; set; }
+	public List<GameComponent> Components { get; set; } = new List<GameComponent>();
+	public List<GameFeature> GameFeatures { get; set; } = new List<GameFeature>();
 	public Vector3 Position { get; set; }
 	public Quaternion Rotation { get; set; }
 	public Vector3 Scale { get; set; }

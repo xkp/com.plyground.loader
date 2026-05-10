@@ -255,13 +255,53 @@ public class PlygroundLoader
 		return result;
 	}
 
+	private static List<GameComponent> LoadGameComponents(JArray componentsNode)
+	{
+		var result = new List<GameComponent>();
+		if (componentsNode == null)
+			return result;
+
+		foreach (var componentNode in componentsNode.OfType<JObject>())
+		{
+			result.Add(new GameComponent
+			{
+				Id = componentNode["id"]?.ToString(),
+				Name = componentNode["name"]?.ToString(),
+				ModuleId = componentNode["moduleId"]?.ToString(),
+				Values = LoadValues(componentNode["values"] as JObject),
+				GameFeatures = LoadGameFeatures((componentNode["gameFeatures"] as JArray) ?? (componentNode["features"] as JArray))
+			});
+		}
+
+		return result;
+	}
+
+	private static IEnumerable<GameFeature> GetItemFeatures(GameItem item)
+	{
+		if (item == null)
+			return Enumerable.Empty<GameFeature>();
+
+		var directFeatures = item.GameFeatures ?? new List<GameFeature>();
+		var componentFeatures = (item.Components ?? new List<GameComponent>())
+			.Where(component => component != null)
+			.SelectMany(component => component.GameFeatures ?? Enumerable.Empty<GameFeature>());
+
+		return directFeatures.Concat(componentFeatures);
+	}
+
 	public static List<string> LoadUsedModuleIds(JObject buildFileObject, JObject gameItemObject)
 	{
-		var moduleIds = PlygroundModuleExtractor.ExtractModuleIds(buildFileObject);
-		if (moduleIds.Count > 0)
-			return moduleIds;
+		var moduleIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-		return PlygroundModuleExtractor.ExtractModuleIds(gameItemObject);
+		foreach (var moduleId in PlygroundModuleExtractor.ExtractModuleIds(buildFileObject))
+			moduleIds.Add(moduleId);
+
+		foreach (var moduleId in PlygroundModuleExtractor.ExtractModuleIds(gameItemObject))
+			moduleIds.Add(moduleId);
+
+		return moduleIds
+			.OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+			.ToList();
 	}
 
 	private static GameItem LoadGameItem(JObject itemNode, PlygroundGame game)
@@ -273,6 +313,8 @@ public class PlygroundLoader
 		result.TemplateId = itemNode["templateId"]?.ToString();
 		result.BuildId = itemNode["buildId"]?.ToString();
 		result.Values = LoadValues(itemNode["values"] as JObject);
+		result.Components = LoadGameComponents(itemNode["components"] as JArray);
+		result.GameFeatures = LoadGameFeatures((itemNode["gameFeatures"] as JArray) ?? (itemNode["features"] as JArray));
 		result.Position = LoadVector(itemNode["position"] as JArray);
 		result.Rotation = LoadQuaternion(itemNode["rotation"] as JArray);
 		result.Scale = LoadVector(itemNode["scale"] as JArray);
@@ -600,6 +642,7 @@ public class PlygroundLoader
 				{
 					await module.UpdateItem(goi.Item1, goi.Item2);
 					UpdateGameObject(goi.Item1, goi.Item2);
+					PlygroundItemFeatureInstaller.Install(goi.Item2, GetItemFeatures(goi.Item1));
 				}
 			}
 		}
@@ -696,7 +739,8 @@ public class PlygroundLoader
 					go.hideFlags = HideFlags.NotEditable;
 				}
 
-				go.name = item.Id; //just in case
+				go.name = item.Id; // ensure deferred feature attachment can find the right object
+				PlygroundItemFeatureInstaller.Install(go, GetItemFeatures(item));
                 return go;
 			}
 		}
@@ -712,6 +756,7 @@ public class PlygroundLoader
 						var go = await ImportGlbAsync(glbPath, unityPath);
 						go.name = item.Id;
 						UpdateGameObject(item, go);
+						PlygroundItemFeatureInstaller.Install(go, GetItemFeatures(item));
 
                         return go;
 					}

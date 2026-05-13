@@ -400,11 +400,36 @@ public class PlygroundBuildScript
 
 	private static List<string> LoadModuleSource(string gameItemPath)
 	{
-		var buildModules = PlygroundModuleExtractor.ExtractModuleIdsFromFile(Configuration.buildFile);
-		if (buildModules.Count > 0)
-			return buildModules;
+		var moduleIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-		return PlygroundModuleExtractor.ExtractModuleIdsFromFile(gameItemPath);
+		AddModuleIdsFromFile(moduleIds, gameItemPath);
+		AddModuleIdsFromFile(moduleIds, GetSourceBuildFilePath(gameItemPath));
+		AddModuleIdsFromFile(moduleIds, Configuration.buildFile);
+
+		return moduleIds
+			.OrderBy(moduleId => moduleId, StringComparer.OrdinalIgnoreCase)
+			.ToList();
+	}
+
+	private static string GetSourceBuildFilePath(string gameItemPath)
+	{
+		if (string.IsNullOrWhiteSpace(gameItemPath))
+			return null;
+
+		var directory = Path.GetDirectoryName(gameItemPath);
+		if (string.IsNullOrWhiteSpace(directory))
+			return null;
+
+		return Path.Combine(directory, "build.json");
+	}
+
+	private static void AddModuleIdsFromFile(HashSet<string> moduleIds, string filePath)
+	{
+		if (moduleIds == null || string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+			return;
+
+		foreach (var moduleId in PlygroundModuleExtractor.ExtractModuleIdsFromFile(filePath))
+			moduleIds.Add(moduleId);
 	}
 
 	private static void RegisterExcludedBuildFiles(ImportModule module)
